@@ -1,0 +1,63 @@
+# Experimental reliability-aware Viterbi.
+# Do not tune on the competition's restricted public ground truth.
+match:
+  fps: 25
+  frames: 199319
+  pitch_length_m: 105.3
+  pitch_width_m: 68.0
+
+ball_recovery:
+  max_gap_frames: 12
+  max_average_speed_m_s: 32.0
+  interpolated_confidence: 0.48
+
+geometry:
+  sigma_m: 2.0
+  contrast_scale_m: 1.5
+  max_reliable_distance_m: 7.0
+  nearby_radius_m: 3.0
+
+tactical:
+  strength: 1.0
+  event_weights:
+    BUILD UP: 0.9
+    PROGRESSION: 0.9
+    CREATING CHANCES: 1.1
+    BALL IN FINAL THIRD: 0.65
+    BALL IN THE BOX: 0.65
+    LONG BALL: 0.35
+    ATTACKING TRANSITION: 0.7
+    PLAYERS IN THE BOX: 0.2
+    DEFENDING IN DEFENSIVE THIRD: -0.55
+    DEFENDING IN MIDDLE THIRD: -0.5
+    DEFENDING IN ATTACKING THIRD: -0.35
+    DEFENSIVE TRANSITION: -0.6
+
+fusion:
+  geometry_log_odds_weight: 2.3
+  tactical_log_odds_weight: 1.0
+  base_dead_probability: 0.04
+  max_dead_probability: 0.97
+
+dead_ball:
+  out_of_bounds_margin: 0.005
+  out_of_bounds_boost: 0.86
+  set_piece_without_ball_boost: 0.68
+  set_piece_with_ball_boost: 0.04
+  low_player_count_boost: 0.2
+  low_player_count_threshold: 5
+
+activity:
+  min_tracked_players: 8
+  max_tracking_hole_frames: 150
+  min_active_block_frames: 1000
+  end_padding_frames: 15
+
+decoder:
+  method: reliability_viterbi
+  home_away_switch_penalty: 5.0
+  play_dead_switch_penalty: 3.3
+  short_run_merge_frames: 18
+  hysteresis_confirm_frames: 15
+  unreliable_team_penalty_boost: 0.5
+  unreliable_dead_penalty_boost: 0.0

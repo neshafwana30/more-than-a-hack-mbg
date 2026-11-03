@@ -1,0 +1,15 @@
+# The match assets are licensed; NEVER commit their contents or derived tracking data.
+data/
+outputs/
+*.mp4
+*_atd.txt
+*_atd.xml
+*_smart_tagging.xml
+*_homography.csv
+*_possession_gt*.csv
+__pycache__/
+.pytest_cache/
+*.py[cod]
+.venv/
+venv/
+.env
