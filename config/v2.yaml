@@ -1,0 +1,66 @@
+# Hypothesized initial weights/costs. NOT trained/tuned with provided public GT.
+# This is an executable heuristic baseline, not a validated winning model.
+version: 2
+game: BAR-ATH
+source: tactical
+fps: 25
+pitch: [105.3, 68.0]
+quality:
+  max_ball_speed_mps: 45.0
+events:
+  anchor_window_frames: 25
+control:
+  distance_scale_m: 2.5
+  distance_weight: 1.0
+  tag_weight: 0.30
+  persistence_weight: 0.50
+  margin_weight: 0.25
+  proximity_window_frames: 11
+  transition_window_frames: 9
+live_dead:
+  live_prior_score: 0.55
+  dead_prior_score: 0.25
+  ball_moving_live_weight: 0.22
+  player_motion_live_weight: 0.12
+  out_of_pitch_weight: 0.35
+  stoppage_anchor_weight: 0.32
+  restart_anchor_weight: 0.14
+  stationary_near_anchor_weight: 0.12
+fusion:
+  team_weight: 1.0
+  live_weight: 1.0
+  dead_weight: 1.0
+  dead_bias: 0.0
+  # FAQ-published second-half graded pre-kickoff interval: [110808,113742).
+  second_half_kickoff_frame: 113742
+temporal:
+  ha_cost: 2.40
+  hd_cost: 1.65
+  dh_cost: 1.90
+  turnover_discount: 0.80
+  stoppage_discount: 0.70
+  restart_discount: 0.70
+  minimum_transition_cost: 0.05
+  short_spell_scale_frames: 12
+  short_spell_soft_penalty: 0.45
+  second_half_kickoff_frame: 113742
+boundary:
+  search_radius_frames: 6
+  minimum_quality_for_refine: 0.10
+  event_anchor_bonus: 0.12
+  boundary_shift_cost: 0.01
+ambiguity:
+  margin_threshold: 0.18
+  window_radius_frames: 35
+  max_windows: 40
+  max_total_video_frames: 3000
+video:
+  enabled: false
+  # Optional LOCAL pretrained COCO sports-ball detector weights; no download.
+  local_yolo_weights: null
+  video_frame_stride: 2
+  max_reprojection_error: 2.0
+  crop_padding_px: 180
+  crop_position_age_frames: 20
+  detector_min_confidence: 0.35
+  max_video_ball_speed_mps: 45.0

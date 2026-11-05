@@ -1,0 +1,30 @@
+{
+  "ball_observed_share_graded": 0.593074274347369,
+  "boundaries_examined": 1069,
+  "boundaries_shifted": 115,
+  "config_sha256": "cd942c2311157666dc07951563b9c726391ebaeb8a0892e798aac62c2f50bf3e",
+  "dead_median_s": 117.36,
+  "dead_segments": 1,
+  "frame_counts": {
+    "A": 59713,
+    "D": 2934,
+    "H": 96210
+  },
+  "graded_frames": 158857,
+  "possession_mean_s": 5.828897196261682,
+  "possession_median_s": 2.04,
+  "possession_spells": 1070,
+  "preliminary_transitions": 1069,
+  "soft_short_spells_merged": 0,
+  "submission_sha256": "04b4ec54fa9ceb03d92f983674e3e832c633916d6b70fe9b28fbc098a25f9022",
+  "total_transitions": 1069,
+  "validator": {
+    "message": "OK    baseline_v2.csv\n      199319 rows, frame 0..199318\n\n      label counts\n        H    96210   48.3%\n        A    59713   30.0%\n        D     2934    1.5%\n        X    40462   20.3%\n\n      reports 1070 possessions of mean 5.8 s\n      (counted with each X as a gap; the scorer bridges abstentions inside a real\n       possession, so its count can be lower than this one)\n\nValid. Note this checks the format only -- it says nothing about whether the labels are right.\nScore it against the public ground truth with run_evaluation.py.",
+    "status": "passed"
+  },
+  "video": {
+    "accepted": 0,
+    "status": "disabled"
+  },
+  "video_windows_selected": 40
+}

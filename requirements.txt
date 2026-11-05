@@ -15,3 +15,5 @@ matplotlib
 kloppy==3.18.0 # buat game
 opencv-python # buat lihat gambar
 ipykernel # buat notebook
+pytest==9.0.2 # buat test
+PyYAML==6.0.3 # buat baca config
