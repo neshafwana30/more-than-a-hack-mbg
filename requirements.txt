@@ -6,5 +6,12 @@
 #
 # Optional tooling -- the ATD loader and anything that opens the video -- lives in
 # requirements-starter.txt.
+
+# buat ngitung
 numpy
 pandas
+matplotlib
+
+kloppy==3.18.0 # buat game
+opencv-python # buat lihat gambar
+ipykernel # buat notebook
