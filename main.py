@@ -25,6 +25,8 @@ from src.dead_ball import estimate_dead_probability
 from src.fusion import fuse_evidence
 from src.temporal_decoder import active_segments, decode_states
 from src.submission import write_submission, validate_csv
+from src.possession_v2 import describe, run_controlled_possession
+from games import half_video_blocks
 
 
 ROOT = Path(__file__).resolve().parent
@@ -34,6 +36,7 @@ SUPPORTED_DECODERS = {
     "hysteresis",
     "confidence_hysteresis",
     "reliability_viterbi",
+    "controlled_possession",
 }
 
 
@@ -153,6 +156,22 @@ def run(
         n,
         config["tactical"],
     )
+
+    # --------------------------------------------------
+    # 6b. Controlled-possession pipeline (v2)
+    # --------------------------------------------------
+    # Uses the two published half boundaries (DATA.md, games.py); everything
+    # outside them is ungraded and written as X.
+
+    if method == "controlled_possession":
+        halves = [tuple(h) for h in match["halves"]] if "halves" in match \
+            else half_video_blocks(match.get("game", "BAR-ATH"))
+        labels, diagnostics = run_controlled_possession(
+            tracking, ball, events, tactical, config, halves,
+        )
+        for line in describe(diagnostics):
+            print(line, flush=True)
+        return labels, [(first, last + 1) for _, first, last in halves]
 
     # --------------------------------------------------
     # 7. Estimate dead-ball probabilities

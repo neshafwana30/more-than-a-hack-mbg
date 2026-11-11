@@ -8,6 +8,7 @@ import yaml
 from main import ROOT, run
 from src.data_loader import load_tracking
 from src.ball_recovery import recover_ball
+from src.tactical_features import tactical_evidence
 from src.submission import write_submission, validate_csv
 from src.temporal_decoder import viterbi, merge_short_runs
 from experiments.external_evaluation import compute_metrics
@@ -46,7 +47,9 @@ def make_synthetic_data(tmp_path: Path, n: int = 160):
 
 def test_integrated_prediction_and_submission(tmp_path):
     make_synthetic_data(tmp_path)
-    config = yaml.safe_load((ROOT / 'config.yaml').read_text())
+    # The earlier evidence-fusion decoders; config.yaml now runs controlled_possession,
+    # which has its own integrated test in tests/test_possession_v2.py.
+    config = yaml.safe_load((ROOT / 'config_confidence.yaml').read_text())
     config['match']['frames'] = 160
     config['activity']['min_active_block_frames'] = 40
     labels, segments = run(config, tmp_path)
@@ -70,6 +73,29 @@ def test_missing_recovery_is_conservative():
     assert np.isnan(est.xy[8:15]).all()
     assert est.confidence[0] == 1.0
     assert est.confidence[2] < 1.0
+
+
+def test_smart_tagging_uses_exact_team_map_and_soft_event_edges():
+    events = [
+        {"code": "BUILD UP", "start": 10, "end": 30,
+         "tags": {"team": "  BARCELONA  "}},
+        {"code": "BUILD UP", "start": 30, "end": 40,
+         "tags": {"team": "Barcelona B"}},
+        {"code": "SET PIECES", "start": 50, "end": 70,
+         "tags": {"team": "N/A"}},
+    ]
+    evidence = tactical_evidence(events, 80, {
+        "team_map": {"Barcelona": "H", "Atletic Club": "A"},
+        "event_edge_taper_frames": 4,
+        "event_weights": {"BUILD UP": 1.0},
+    })
+
+    assert evidence.log_odds_home[10] < evidence.log_odds_home[13]
+    assert evidence.log_odds_home[13] == pytest.approx(1.0)
+    assert np.all(evidence.log_odds_home[30:40] == 0.0)
+    assert evidence.set_piece[50] < evidence.set_piece[59]
+    assert evidence.set_piece[59] == pytest.approx(1.0)
+    assert evidence.set_piece[70] == 0.0
 
 
 def test_incomplete_tracking_rejected(tmp_path):

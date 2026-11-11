@@ -19,6 +19,10 @@ geometry:
 
 tactical:
   strength: 1.0
+  team_map:
+    Barcelona: H
+    Atletic Club: A
+  event_edge_taper_frames: 12
   event_weights:
     BUILD UP: 0.9
     PROGRESSION: 0.9
