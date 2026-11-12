@@ -1,0 +1,38 @@
+shape_clip_calibrated:
+  why: "Keyakinan shape model tidak boleh melebihi akurasi held-out-nya sendiri: ln(0.85/0.15) = 1.7"
+  set:
+    possession_v2.shape.clip: 1.7
+shape_missing_weight_half:
+  why: "Agreement 85% diukur di frame bola terlihat; saat bola hilang, bobot penuh bisa terlalu percaya diri"
+  set:
+    possession_v2.evidence.shape_when_ball_missing: 0.5
+ablation_no_shape:
+  why: "Dokumen: seberapa jauh label bergantung pada shape model"
+  set:
+    possession_v2.evidence.shape_when_ball_visible: 0.0
+    possession_v2.evidence.shape_when_ball_missing: 0.0
+ablation_no_tactical:
+  why: "Dokumen: kontribusi Smart Tagging"
+  set:
+    possession_v2.evidence.tactical_when_ball_visible: 0.0
+    possession_v2.evidence.tactical_when_ball_missing: 0.0
+ablation_no_restart_prior:
+  why: "Dokumen: kontribusi tim yang melakukan restart"
+  set:
+    possession_v2.restart.restart_team_weight: 0.0
+own_radius_1_0:
+  why: "Sensitivitas: 'di bola' = dalam satu langkah (lebih ketat)"
+  set:
+    possession_v2.control.own_radius_m: 1.0
+own_radius_2_0:
+  why: "Sensitivitas (lebih longgar)"
+  set:
+    possession_v2.control.own_radius_m: 2.0
+team_switch_penalty_10:
+  why: "Sensitivitas di control_min_s yang baru"
+  set:
+    possession_v2.decoder.team_switch_penalty: 10.0
+team_switch_penalty_20:
+  why: "Sensitivitas di control_min_s yang baru"
+  set:
+    possession_v2.decoder.team_switch_penalty: 20.0

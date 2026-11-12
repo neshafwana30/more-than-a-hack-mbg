@@ -1,0 +1,4 @@
+﻿id,pemegang_awal_jendela,pemegang_akhir_jendela,waktu_perubahan,frame_perubahan,catatan,pemeriksa
+1,A,D,,,"merah menendang ke gawang biru, bola keluar (out); tidak ada biru yang berhasil merebut; bola hilang di tracking karena sudah keluar",Shaf
+2,D,A,,,"bola mati dulu, keeper merah letakkan bola di tanah lalu menendang, diterima merah; bola hilang saat dipegang keeper, terdeteksi lagi saat diletakkan",Shaf
+3,H,A,,,"offside biru, possession pindah ke merah; kemungkinan ada henti pendek di antaranya",Shaf

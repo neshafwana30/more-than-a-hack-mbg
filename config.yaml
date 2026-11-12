@@ -102,7 +102,7 @@ possession_v2:
     own_margin_m: 0.5                # and clearly closer than the nearest opponent
     in_flight_speed_m_s: 15.0        # a ball this fast is travelling, not controlled
     episode_max_gap_frames: 4        # bridge tracking jitter inside one touch
-    control_min_s: 0.5               # "keeps the ball" (CHALLENGE.md proxy 1)
+    control_min_s: 1.0              # "keeps the ball" (CHALLENGE.md proxy 1)
     pass_min_distance_m: 5.0         # "completes a pass" (proxy 2): ball travels to a teammate
     pass_max_gap_s: 4.0
     controlled_weight: 3.0           # log-odds per frame of a controlled episode
