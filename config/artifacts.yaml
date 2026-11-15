@@ -1,0 +1,3 @@
+﻿# Storage only. Model/problem settings remain in config/v2.yaml.
+root_dir: artifacts
+submission_filename: baseline_v2.csv

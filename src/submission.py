@@ -74,9 +74,9 @@ def segments_for_labels(labels,half,fps=25):
     return pd.DataFrame(out,columns=['half','start_frame','end_frame','label','n_frames','duration_s'])
 
 
-def aggregate_diagnostics(labels,half,extra=None,fps=25):
+def aggregate_diagnostics(labels,half,extra=None,fps=25,segments=None):
     labels=np.asarray(labels);half=np.asarray(half)
-    seg=segments_for_labels(labels,half,fps=fps)
+    seg=segments_for_labels(labels,half,fps=fps) if segments is None else segments
     graded=half!=0
     counts={state:int(np.sum(labels[graded]==state)) for state in ('H','A','D')}
     spells=seg[seg.label.isin(('H','A'))]
