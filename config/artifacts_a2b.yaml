@@ -1,0 +1,3 @@
+# Storage only for A2b and its preflight contribution audit.
+root_dir: artifacts
+submission_filename: baseline_a2b.csv

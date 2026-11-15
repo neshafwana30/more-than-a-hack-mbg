@@ -9,7 +9,7 @@ from src.pipeline import run_pipeline
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description='BAR-ATH offline pipeline with CSV/JSON run artifacts.')
-    parser.add_argument('--config', default='config/v2.yaml', help='Problem/model YAML')
+    parser.add_argument('--config', default='config/d1.yaml', help='Problem/model YAML')
     parser.add_argument('--artifacts-config', default='config/artifacts.yaml', help='Storage-only YAML')
     parser.add_argument('--data-dir', default=None)
     group = parser.add_mutually_exclusive_group()

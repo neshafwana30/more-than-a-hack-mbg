@@ -1,0 +1,3 @@
+# F1 storage only; project storage settings are preserved.
+root_dir: artifacts
+submission_filename: baseline_f1.csv

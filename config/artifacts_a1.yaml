@@ -1,0 +1,3 @@
+# Storage settings for the isolated A1 experiment.
+root_dir: artifacts
+submission_filename: baseline_a1.csv

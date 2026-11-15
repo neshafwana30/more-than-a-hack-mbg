@@ -1,0 +1,3 @@
+# D1 storage only.
+root_dir: artifacts
+submission_filename: baseline_d1.csv

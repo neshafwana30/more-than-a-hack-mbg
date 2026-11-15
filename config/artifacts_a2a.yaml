@@ -1,0 +1,3 @@
+# Separate storage configuration for A2a runs.
+root_dir: artifacts
+submission_filename: baseline_a2a.csv

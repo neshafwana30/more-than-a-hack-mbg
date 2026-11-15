@@ -57,7 +57,7 @@ def _run_core(frame, events, cfg, *, artifacts=None, pass_name='initial'):
                                  frame_ids=frame.frame.to_numpy())
     quality = call('quality', analyze_observations, frame, cfg.get('quality'))
     event = call('events', detect_events, frame, events, cfg.get('events'))
-    control = call('control', estimate_team_control, frame, quality.frames, cfg.get('control'))
+    control = call('control', estimate_team_control, frame, quality.frames, cfg.get('control'), cfg.get('fps',25), tuple(cfg.get('pitch',(105.3,68.0))))
     live = call('live_dead', estimate_live_dead, frame, quality.frames, event.frames, cfg.get('live_dead'))
     fusion = call('fusion', fuse_evidence, frame, quality, control, live, event, cfg.get('fusion'))
     decode = call('decode', decode_states, fusion.state_log_scores, frame.half.to_numpy(int),
@@ -120,6 +120,16 @@ def _infer_from_features(bundle, cfg, video_paths, run, *, features_saved=False)
                            frame.half.to_numpy(int), quality.observation_weight, fusion.stop_hint,
                            fusion.restart_hint, cfg.get('boundary'), frame_ids=frame.frame.to_numpy())
     labels = boundary.labels
+    if cfg.get('control',{}).get('acquisition',{}).get('enabled',False):
+        from .acquisition_diagnostics import acquisition_diagnostics
+        from .control_contribution_audit import audit_control_contributions
+        run.capture('diagnostics/control_contributions',audit_control_contributions,frame,control.components,
+                    fusion.control_components.forced_d)
+        from .acquisition_scenarios import acquisition_scenarios
+        run.capture('diagnostics/final/acquisition', acquisition_diagnostics,
+                    frame, control, fusion, decode, labels, cfg.get('fps',25))
+        run.capture('diagnostics/acquisition_synthetic', acquisition_scenarios,
+                    cfg.get('control',{}), cfg.get('fps',25), tuple(cfg.get('pitch',(105.3,68.0))))
     run.capture('inference/validation', validate_labels, labels, frame.half.to_numpy(int), len(frame))
     prediction = run.capture('diagnostics/final/prediction', prediction_diagnostics,
                              labels, frame.half.to_numpy(int), cfg.get('fps', 25))
