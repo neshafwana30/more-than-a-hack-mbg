@@ -120,6 +120,19 @@ def _infer_from_features(bundle, cfg, video_paths, run, *, features_saved=False)
                            frame.half.to_numpy(int), quality.observation_weight, fusion.stop_hint,
                            fusion.restart_hint, cfg.get('boundary'), frame_ids=frame.frame.to_numpy())
     labels = boundary.labels
+    player_audit_cfg=cfg.get('diagnostics',{}).get('player_acquisition',{})
+    if player_audit_cfg.get('enabled',False):
+        from .player_acquisition_diagnostics import player_acquisition_diagnostics,acquisition_reference_context
+        from .player_acquisition_scenarios import player_acquisition_scenarios
+        if bundle.player_positions is None:
+            run.skipped('diagnostics/player_acquisition','player_positions_missing')
+        else:
+            player_audit=run.capture('diagnostics/player_acquisition',player_acquisition_diagnostics,
+                        frame,bundle.player_positions,player_audit_cfg,quality.frames,
+                        fusion.control_components.forced_d,cfg.get('fps',25),tuple(cfg.get('pitch',(105.3,68.0))))
+            run.capture('diagnostics/player_acquisition_reference',acquisition_reference_context,player_audit,decode.transitions,labels)
+        run.capture('diagnostics/player_acquisition_synthetic',player_acquisition_scenarios,
+                    player_audit_cfg,cfg.get('fps',25),tuple(cfg.get('pitch',(105.3,68.0))))
     if cfg.get('control',{}).get('acquisition',{}).get('enabled',False):
         from .acquisition_diagnostics import acquisition_diagnostics
         from .control_contribution_audit import audit_control_contributions

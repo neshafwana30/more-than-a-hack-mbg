@@ -1,0 +1,15 @@
+# Diagnostic hypotheses only; no scorer changes or match-specific tuning.
+enabled: true
+association_max_speed_mps: 12.0
+association_ambiguity_margin_m: 0.15
+history_cap_frames: 10
+pre_frames: 5
+post_frames: 5
+maximum_distance_m: 2.5
+maximum_relative_speed_mps: 3.0
+minimum_player_quality: 0.65
+minimum_approach_drop_m: 0.5
+minimum_incoming_speed_mps: 3.0
+minimum_speed_drop_mps: 2.0
+minimum_turn_degrees: 30.0
+minimum_post_support_fraction: 0.8

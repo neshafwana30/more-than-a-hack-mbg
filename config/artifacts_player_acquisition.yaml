@@ -1,0 +1,3 @@
+# Storage for diagnostic-only runs; no new submission is produced.
+root_dir: artifacts
+submission_filename: diagnostic_only.csv
