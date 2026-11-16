@@ -1,0 +1,130 @@
+# Controlled-possession pipeline (src/possession_v2.py). THIS IS THE SUBMISSION CONFIG.
+#
+#   python main.py            # -> outputs/submission.csv
+#
+# Every number below is an engineered prior with a football reason (see TECHNICAL.md).
+# None of them was fitted to the provided game's labels -- public or otherwise -- and they must
+# not be tuned against the public 5-minute window (RULES.md, EVALUATION.md).
+match:
+  fps: 25
+  frames: 199319
+  pitch_length_m: 105.3
+  pitch_width_m: 68.0
+
+ball_recovery:
+  max_gap_frames: 12
+  max_average_speed_m_s: 32.0
+  interpolated_confidence: 0.48
+
+geometry:
+  sigma_m: 2.0
+  contrast_scale_m: 1.5
+  max_reliable_distance_m: 7.0
+  nearby_radius_m: 3.0
+
+# These are engineered priors, not learned likelihoods.
+tactical:
+  strength: 1.0
+  team_map:
+    Barcelona: H
+    Atletic Club: A
+  event_edge_taper_frames: 12
+  event_weights:
+    BUILD UP: 0.9
+    PROGRESSION: 0.9
+    CREATING CHANCES: 1.1
+    BALL IN FINAL THIRD: 0.65
+    BALL IN THE BOX: 0.65
+    LONG BALL: 0.35
+    ATTACKING TRANSITION: 0.7
+    PLAYERS IN THE BOX: 0.2
+    DEFENDING IN DEFENSIVE THIRD: -0.55
+    DEFENDING IN MIDDLE THIRD: -0.5
+    DEFENDING IN ATTACKING THIRD: -0.35
+    DEFENSIVE TRANSITION: -0.6
+
+fusion:
+  geometry_log_odds_weight: 2.3
+  tactical_log_odds_weight: 1.0
+  base_dead_probability: 0.04
+  max_dead_probability: 0.97
+
+dead_ball:
+  out_of_bounds_margin: 0.005
+  out_of_bounds_boost: 0.86
+  set_piece_without_ball_boost: 0.68
+  set_piece_with_ball_boost: 0.04
+  low_player_count_boost: 0.2
+  low_player_count_threshold: 5
+
+activity:
+  min_tracked_players: 8
+  max_tracking_hole_frames: 150
+  min_active_block_frames: 1000
+  # Automatically detect playing blocks using tracking density. No manually specified
+  # kickoff or halftime frame indices are used.
+  end_padding_frames: 15
+
+decoder:
+  method: controlled_possession
+  # Unused by this method; kept so the shared validation in main.py stays happy.
+  short_run_merge_frames: 0
+
+possession_v2:
+  motion:
+    max_player_speed_m_s: 12.0       # faster than any sprint = tracking jump, ignore
+    team_speed_window_frames: 50     # 2 s: collective pace, not individual bursts
+    ball_speed_lag_frames: 5
+    ball_speed_window_frames: 25     # 1 s
+    out_of_bounds_margin: 0.005      # ~0.5 m beyond the line, beyond tracking jitter
+
+  dead_ball:
+    prior_log_odds: -0.5             # slightly more play than stoppage
+    walking_speed_m_s: 1.3           # human walking pace
+    speed_scale_m_s: 0.5
+    slow_players_weight: 1.0
+    ball_out_weight: 4.0             # ball over the line = dead, and stays dead while lost there
+    still_ball_speed_m_s: 0.5        # placed ball
+    still_ball_weight: 1.5
+    fast_ball_speed_m_s: 5.0         # struck / rolling ball inside the pitch = play is on
+    fast_ball_weight: 1.5
+    long_missing_frames: 50          # ball lost for 2 s or more
+    long_missing_weight: 0.5         # weak: also happens in live play
+    set_piece_before_s: 2.0          # Smart Tagging SET PIECES starts while the restart is set up
+    set_piece_after_s: 1.0
+    set_piece_weight: 2.0
+    switch_penalty: 8.0
+    min_dead_s: 2.0                  # a real stoppage lasts seconds
+    min_live_s: 2.0
+
+  control:
+    own_radius_m: 1.5                # player on the ball: within a stride of it
+    own_margin_m: 0.5                # and clearly closer than the nearest opponent
+    in_flight_speed_m_s: 15.0        # a ball this fast is travelling, not controlled
+    episode_max_gap_frames: 4        # bridge tracking jitter inside one touch
+    control_min_s: 0.5               # "keeps the ball" (CHALLENGE.md proxy 1)
+    pass_min_distance_m: 5.0         # "completes a pass" (proxy 2): ball travels to a teammate
+    pass_max_gap_s: 4.0
+    controlled_weight: 3.0           # log-odds per frame of a controlled episode
+    touch_weight: 0.5                # a touch / deflection without control barely counts
+
+  shape:
+    feature_window_frames: 25
+    train_stride_frames: 5           # thin out strongly autocorrelated frames
+    l2: 1.0
+    clip: 3.0
+
+  evidence:
+    shape_when_ball_visible: 0.3     # touches speak for themselves when the ball is seen
+    shape_when_ball_missing: 1.0     # team shape is the main evidence when it is not
+    tactical_when_ball_visible: 0.3
+    tactical_when_ball_missing: 0.5
+
+  restart:
+    restart_team_weight: 2.0         # set piece tagged with a team -> that team restarts
+    restart_team_window_s: 2.0
+    restart_match_before_s: 2.0
+    restart_match_after_s: 20.0
+
+  decoder:
+    team_switch_penalty: 15.0        # ~ a 0.2 s controlled touch, or seconds of team-shape evidence
