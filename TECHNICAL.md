@@ -36,7 +36,7 @@ The scores are decoded with a switching penalty. A stoppage must last at least 2
 
 **Control.** A player is *on the ball* when they are within 1.5 m of it and at least 0.5 m closer than the nearest opponent. A ball moving faster than 15 m/s is travelling, not controlled. Touches by the same team separated by 4 frames or fewer are merged into one episode. An episode counts as **controlled** in either of two cases, which are the two proxies `CHALLENGE.md` suggests:
 
-- **Kept.** The episode lasts at least 0.5 s.
+- **Kept.** The episode lasts at least 1 s (`control_min_s`).
 - **Completed pass.** The same team touches the ball again within 4 s, at least 5 m away, with no opponent touch and no stoppage in between.
 
 **What does not count.** Touches that are not controlled, which covers deflections, blocks and duels won without keeping the ball, carry only weak evidence (0.5 log-odds per frame against 3.0). On their own they cannot overcome the switch penalty of 15.
@@ -75,16 +75,17 @@ When trained on one half, the model agrees with the detector on the other half a
 
 ## 6. Checks we ran — and what we did *not* do
 
-- `python evaluation/validate_submission.py outputs/submission.csv` passes. The file has 344 possessions, mean 11.5 s.
+- `python evaluation/validate_submission.py outputs/submission.csv` passes. TODO(re-run after `control_min_s` 0.5 → 1.0): the previous run gave 344 possessions, mean 11.5 s.
 - Without using any labels, about 38% of graded frames are dead ball, across 128 stoppages, and home has 63% of live frames. All three are plausible for a LaLiga match.
-- **Public 5-minute window.** We scored against it **once**, to check that the pipeline is aligned and that the labels mean what we think. We did **not** use it to choose any parameter or any version. The result was spellF1 0.46 and macroF1 0.80, with 22 predicted possessions against 17. The published baseline gets 0.33 / 0.62 on the same window. Seventeen possessions cannot rank anything (see `EVALUATION.md`).
+- **Public 5-minute window.** We scored against it **once**, to check that the pipeline is aligned and that the labels mean what we think. We did **not** use it to choose any parameter or any version. With `control_min_s` = 1.0 the result was spellF1 0.490 and macroF1 0.817 (accuracy 0.839, kappa 0.737), with 14 predicted possessions against 17 in the ground truth (mean 19.0 s against 14.2 s). The best published baseline (`baseline_smooth125`) gets 0.424 / 0.581 on the same window, and the raw baseline 0.038 / 0.597. Seventeen possessions cannot rank anything (see `EVALUATION.md`), so we read this only as "aligned and sensible". The weak spot is dead-ball recall (0.58, precision 1.00): we under-call stoppages, consistent with the 1–2 s boundary lag in §7.
 - **Determinism.** The same file is produced twice in a row, and with the pinned `numpy==2.3.5`.
 - 18 unit and synthetic tests (`pytest`), none of which read competition labels.
 
 ## 7. Limitations and what we would do next
 
 - **Stoppage boundaries lag by about 1–2 s**, because player pace is averaged over 2 s. Next step: detect the kick at the restart and the line crossing directly from ball speed and position, and snap the boundaries to them.
-- **Possessions shorter than about 1 s** are mostly merged away by the switch penalty. This is the price of not fragmenting.
+- **Possessions shorter than about 1 s** are mostly merged away by the switch penalty, and with `control_min_s` = 1.0 a short touch only counts as controlled if it is part of a completed pass. This is the price of not fragmenting. On the public window we predict slightly longer possessions than the ground truth (19.0 s against 14.2 s) and 14 of them against 17.
+- **Dead-ball recall is low** (0.58 on the public window, with precision 1.00): short or slowly-set stoppages are missed.
 - **Aerial balls.** The ball is projected onto the ground, so a high ball can look "near" the wrong player. The in-flight speed gate catches fast balls but not slow, lofted ones.
 - **Ball-missing stretches** rely on team shape, which is a weaker signal than touches. The 85% agreement above is measured where the ball is visible, so it is probably optimistic for the missing stretches.
 - All parameters are hand-set priors. With labelled data from *other* matches we would fit them there.
