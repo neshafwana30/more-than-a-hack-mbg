@@ -16,6 +16,7 @@ class DecodeResult:
     labels: np.ndarray
     transitions: pd.DataFrame
     diagnostics: dict
+    game_state: pd.DataFrame | None = None
 
 
 def state_cost_matrix(cfg: dict) -> np.ndarray:
@@ -69,7 +70,13 @@ def _soft_short_run_refine(states: np.ndarray, scores: np.ndarray, cfg: dict) ->
 
 def decode_states(scores: np.ndarray, half: np.ndarray, transition_hint=None, stop_hint=None, restart_hint=None,
                   config: dict | None = None) -> DecodeResult:
-    cfg=config or {};score=np.asarray(scores,dtype=float);half=np.asarray(half,dtype=int)
+    cfg=config or {}
+    method=cfg.get('method','joint')
+    if method not in ('joint','hierarchical'):raise ValueError('temporal.method must be joint or hierarchical')
+    if method=='hierarchical':
+        from .hierarchical_decoder import decode_hierarchical
+        return decode_hierarchical(scores,half,transition_hint,stop_hint,restart_hint,cfg)
+    score=np.asarray(scores,dtype=float);half=np.asarray(half,dtype=int)
     if score.shape!=(len(half),3) or not np.isfinite(score).all():raise ValueError('scores must be finite (N,3)')
     n=len(half)
     zero=np.zeros(n,float)

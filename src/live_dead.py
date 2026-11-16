@@ -69,8 +69,14 @@ def _context_stoppage(frames, quality, event_frames, motion, valid_motion, confi
     return cue,support,active,bonus,cfg
 
 
-def estimate_live_dead(frames: pd.DataFrame, quality: pd.DataFrame, event_frames: pd.DataFrame, config: dict | None = None) -> LiveDeadResult:
+def estimate_live_dead(frames: pd.DataFrame, quality: pd.DataFrame, event_frames: pd.DataFrame, config: dict | None = None, fps=25, pitch=(105.3,68.0)) -> LiveDeadResult:
     cfg=config or {};n=len(frames)
+    model=cfg.get('model','legacy')
+    if model not in ('legacy','signed'):raise ValueError('live_dead.model must be legacy or signed')
+    if model=='signed':
+        if cfg.get('context_stoppage',{}).get('enabled',False):raise ValueError('Signed mode cannot combine with D1')
+        from .game_state_evidence import estimate_signed_game_state
+        return estimate_signed_game_state(frames,quality,event_frames,cfg.get('signed',{}),fps,pitch)
     good_speed=quality.ball_motion_reliable.to_numpy(bool)
     speed=np.nan_to_num(frames.ball_speed2d_mps.to_numpy(float),nan=0,posinf=0)
     player_motion=np.column_stack([frames.player_motion_robust_h.to_numpy(float),frames.player_motion_robust_a.to_numpy(float)])

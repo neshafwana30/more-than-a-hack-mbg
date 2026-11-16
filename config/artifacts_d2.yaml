@@ -1,0 +1,3 @@
+# Storage for isolated game-state experiments. Per-run filename overrides recorded.
+root_dir: artifacts
+submission_filename: baseline_d2.csv

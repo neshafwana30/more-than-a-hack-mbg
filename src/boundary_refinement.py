@@ -13,9 +13,11 @@ class BoundaryResult:
 
 
 def refine_boundaries(labels: np.ndarray, scores: np.ndarray, half: np.ndarray, quality=None,
-                      stop_hint=None, restart_hint=None, config:dict|None=None) -> BoundaryResult:
+                      stop_hint=None, restart_hint=None, config:dict|None=None, fixed_dead_mask=None) -> BoundaryResult:
     cfg=config or {};out=np.asarray(labels).copy();half=np.asarray(half)
     scores=np.asarray(scores,float);n=len(out)
+    fixed=None if fixed_dead_mask is None else np.asarray(fixed_dead_mask,bool)
+    if fixed is not None and (fixed.shape!=(len(out),) or not np.array_equal(out=='D',fixed)):raise ValueError('Fixed D mask must match decoded labels')
     radius=max(0,int(cfg.get('search_radius_frames',6)))
     min_quality=float(cfg.get('minimum_quality_for_refine',0.10))
     if len(scores)!=n or len(half)!=n:raise ValueError('Length mismatch')
@@ -27,6 +29,7 @@ def refine_boundaries(labels: np.ndarray, scores: np.ndarray, half: np.ndarray, 
     # Do not allow two refinement windows to overlap; preserves segment order.
     for t in changes:
         prev,following=str(out[t-1]),str(out[t])
+        if fixed is not None and ('D' in (prev,following)):continue
         if prev not in STATE or following not in STATE:continue
         left=t-1
         while left>0 and half[left-1]==half[t] and out[left-1]==prev:left-=1
@@ -51,6 +54,7 @@ def refine_boundaries(labels: np.ndarray, scores: np.ndarray, half: np.ndarray, 
                      'shift_frames':int(best-t),'from':prev,'to':following,
                      'ambiguous':bool(np.nanmean(q[max(lo-1,0):min(hi+1,n)])<0.4)})
     # Always respect publicly documented pre-kickoff D anchor, even after refinement.
-    if n>113742 and len(half)>110808 and half[110808]==2:
+    if fixed is None and n>113742 and len(half)>110808 and half[110808]==2:
         out[110808:113742]='D'
+    if fixed is not None and not np.array_equal(out=='D',fixed):raise AssertionError('D mask changed during refinement')
     return BoundaryResult(out,pd.DataFrame(rows,columns=['half','original_frame','refined_frame','shift_frames','from','to','ambiguous']))

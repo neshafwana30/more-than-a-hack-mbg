@@ -58,7 +58,7 @@ def _run_core(frame, events, cfg, *, artifacts=None, pass_name='initial'):
     quality = call('quality', analyze_observations, frame, cfg.get('quality'))
     event = call('events', detect_events, frame, events, cfg.get('events'))
     control = call('control', estimate_team_control, frame, quality.frames, cfg.get('control'), cfg.get('fps',25), tuple(cfg.get('pitch',(105.3,68.0))))
-    live = call('live_dead', estimate_live_dead, frame, quality.frames, event.frames, cfg.get('live_dead'))
+    live = call('live_dead', estimate_live_dead, frame, quality.frames, event.frames, cfg.get('live_dead'),cfg.get('fps',25),tuple(cfg.get('pitch',(105.3,68.0))))
     fusion = call('fusion', fuse_evidence, frame, quality, control, live, event, cfg.get('fusion'))
     decode = call('decode', decode_states, fusion.state_log_scores, frame.half.to_numpy(int),
                   fusion.transition_hint, fusion.stop_hint, fusion.restart_hint, cfg.get('temporal'))
@@ -118,8 +118,15 @@ def _infer_from_features(bundle, cfg, video_paths, run, *, features_saved=False)
     run.manifest['final_core_pass'] = 'after_video' if 'core/after_video/decode' in run.manifest['stages'] else 'initial'
     boundary = run.capture('boundary', refine_boundaries, decode.labels, fusion.state_log_scores,
                            frame.half.to_numpy(int), quality.observation_weight, fusion.stop_hint,
-                           fusion.restart_hint, cfg.get('boundary'), frame_ids=frame.frame.to_numpy())
+                           fusion.restart_hint, cfg.get('boundary'), frame_ids=frame.frame.to_numpy(),
+                           fixed_dead_mask=(decode.labels=='D') if cfg.get('temporal',{}).get('method','joint')=='hierarchical' else None)
     labels = boundary.labels
+    from .game_state_diagnostics import game_state_diagnostics
+    run.capture('diagnostics/game_state',game_state_diagnostics,frame,quality,live,fusion,decode,labels,cfg.get('fps',25))
+    if cfg.get('live_dead',{}).get('model','legacy')=='signed':
+        from .game_state_scenarios import game_state_scenarios
+        run.capture('diagnostics/game_state_synthetic',game_state_scenarios,cfg['live_dead'].get('signed',{}),
+                    cfg.get('temporal'),cfg.get('fps',25),tuple(cfg.get('pitch',(105.3,68.0))))
     player_audit_cfg=cfg.get('diagnostics',{}).get('player_acquisition',{})
     if player_audit_cfg.get('enabled',False):
         from .player_acquisition_diagnostics import player_acquisition_diagnostics,acquisition_reference_context
@@ -169,7 +176,7 @@ def infer_from_features(bundle: FeatureResult, cfg: dict, video_paths: dict | No
 
 
 def run_pipeline(config: dict, output_path=None, project_dir=None, data_dir=None, enable_video=None, *,
-                 storage_config=None, storage_config_path=None, execution_metadata=None) -> PipelineResult:
+                 storage_config=None, storage_config_path=None, execution_metadata=None, feature_run_dir=None) -> PipelineResult:
     """One run directory contains features, all inference stages and validated submission.
 
     output_path is retained only as a filename override; output directories belong to storage YAML.
@@ -188,11 +195,19 @@ def run_pipeline(config: dict, output_path=None, project_dir=None, data_dir=None
                      entrypoint='run_pipeline', execution=execution) as run:
         if cfg['source'] != 'tactical':
             raise ValueError('Broadcast is out of scope')
-        bundle = run.capture('features/initial', build_features, game=cfg['game'], data_dir=data_dir, source='tactical')
+        if feature_run_dir is None:
+            bundle = run.capture('features/initial', build_features, game=cfg['game'], data_dir=data_dir, source='tactical')
+            paths = games.asset_paths(game=cfg['game'], data_dir=data_dir)
+            run.json('inputs/assets.json', paths)
+        else:
+            if data_dir is not None:raise ValueError('Do not combine raw data_dir with feature replay')
+            from .feature_replay import load_feature_replay
+            bundle,provenance=load_feature_replay(feature_run_dir,cfg)
+            run.json('inputs/feature_replay.json',provenance)
+            run.capture('features/initial',lambda:bundle)
+            paths=None
         if len(bundle.frames) != games.source_frames('tactical', cfg['game']):
             raise ValueError('Wrong tactical timeline')
-        paths = games.asset_paths(game=cfg['game'], data_dir=data_dir)
-        run.json('inputs/assets.json', paths)
         result = _infer_from_features(bundle, cfg, paths, run, features_saved=True)
         submission_path = run.path / 'submission' / run.storage['submission_filename']
         result.output = run.capture('submission/write', save_submission, result.labels, submission_path,
